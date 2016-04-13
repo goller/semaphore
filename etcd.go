@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	etcdCtx "github.com/coreos/etcd/Godeps/_workspace/src/golang.org/x/net/context"
 	"github.com/coreos/etcd/client"
 	"golang.org/x/net/context"
 )
@@ -36,6 +37,27 @@ type KeysAPI interface {
 type EtcdLockClient struct {
 	keyapi  KeysAPI
 	keypath string
+}
+
+type EtcdWrapper struct {
+	Etcd client.KeysAPI
+}
+
+func (e *EtcdWrapper) Get(ctx context.Context, key string, opts *client.GetOptions) (*client.Response, error) {
+	return e.Etcd.Get(ctx.(etcdCtx.Context), key, opts)
+}
+func (e *EtcdWrapper) Set(ctx context.Context, key, value string, opts *client.SetOptions) (*client.Response, error) {
+	return e.Etcd.Set(ctx.(etcdCtx.Context), key, value, opts)
+}
+
+func (e *EtcdWrapper) Create(ctx context.Context, key, value string) (*client.Response, error) {
+	return e.Etcd.Create(ctx.(etcdCtx.Context), key, value)
+}
+
+func NewEtcdWrapper(etcd client.KeysAPI) *EtcdWrapper {
+	return &EtcdWrapper{
+		Etcd: etcd,
+	}
 }
 
 // NewEtcdLockClient creates a new EtcdLockClient. The key parameter defines
